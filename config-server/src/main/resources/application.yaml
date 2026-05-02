@@ -1,3 +1,16 @@
+server:
+  port: 8888   # Port number where the Config Server will run
+
 spring:
   application:
-    name: config-server
+    name: config-server   # Name of this application (used for identification in microservices)
+
+  cloud:
+    config:
+      server:
+        git:
+          uri: git@github.com:cookies042004/Crypto-Config.git
+          # Git repository URL where all configuration files are stored
+
+          default-label: main
+          # Branch name of the Git repository to read configurations from
