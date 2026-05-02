@@ -1,3 +1,10 @@
 spring:
   application:
-    name: api-gateway
+    name: api-gateway   # Unique name of the service (must match api-gateway.yml in Config Server Git repo)
+
+  config:
+    import: configserver:http://localhost:8888
+    # Connects this service to the Config Server running on port 8888
+    # At startup, the API Gateway will fetch its configuration from the Config Server
+    # Config Server will look for a file named "api-gateway.yml" in the Git repository
+    # This helps keep configuration centralized instead of storing it inside the project
