@@ -17,16 +17,16 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/h2-console/**",
+                                "/api/test/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .headers(headers ->
-                        headers.frameOptions(frame -> frame.disable())
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.disable())
                 );
 
         return http.build();
