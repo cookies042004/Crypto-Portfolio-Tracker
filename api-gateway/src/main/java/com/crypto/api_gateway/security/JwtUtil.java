@@ -21,8 +21,9 @@ public class JwtUtil {
         key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String extractEmail(String token) {
-        return getClaims(token).getSubject();
+    //  changed here type from String to Claims
+    public Claims extractClaims(String token) {
+        return getClaims(token);
     }
 
     public boolean isValid(String token) {

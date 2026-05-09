@@ -5,6 +5,7 @@ import com.crypto.auth_service.dto.RegisterRequest;
 import com.crypto.auth_service.entity.User;
 import com.crypto.auth_service.exception.ResourceAlreadyExistsException;
 import com.crypto.auth_service.repository.UserRepository;
+import com.crypto.auth_service.role_enum.Role;
 import com.crypto.auth_service.security.JwtUtil;
 import com.crypto.auth_service.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void register(RegisterRequest request) {
+        Role role;
+
+        if (request.getRole() == null || request.getRole().isBlank()) {
+            role = Role.USER;
+        } else {
+            role = Role.valueOf(request.getRole().toUpperCase());
+
+            if (role == Role.ADMIN) {
+                throw new RuntimeException("Admin registration not allowed");
+            }
+        }
 
         userRepository.findByEmail(request.getEmail())
                 .ifPresent(user -> {
@@ -31,6 +43,7 @@ public class AuthServiceImpl implements AuthService {
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .role(role)
                 .build();
 
         userRepository.save(user);
@@ -46,6 +59,6 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        return jwtUtil.generateToken(user.getEmail());
+        return jwtUtil.generateToken(user.getEmail(), user.getRole().name());
     }
 }
