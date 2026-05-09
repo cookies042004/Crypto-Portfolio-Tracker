@@ -55,9 +55,11 @@ public class JwtUtil {
      * Payload -> subject (email), issuedAt, expiration
      * Signature -> HMAC using secret key
      */
-    public String generateToken(String email) {
+    public String generateToken(String email, String role) {
         return Jwts.builder()
                 .setSubject(email) // Standard claim: identifies the principal (user)
+
+                .claim("role", role)
 
                 .setIssuedAt(new Date()) // Token creation timestamp
 

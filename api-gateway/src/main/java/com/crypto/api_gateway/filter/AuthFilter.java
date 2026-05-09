@@ -1,6 +1,7 @@
 package com.crypto.api_gateway.filter;
 
 import com.crypto.api_gateway.security.JwtUtil;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.gateway.filter.*;
 import org.springframework.http.HttpHeaders;
@@ -39,11 +40,16 @@ public class AuthFilter implements GlobalFilter {
         }
 
         // Extract user info
-        String email = jwtUtil.extractEmail(token);
+        Claims claims  = jwtUtil.extractClaims(token);
+        String email = claims.getSubject();
+        String role = claims.get("role", String.class);
 
         // Add header to downstream services
         ServerWebExchange modifiedExchange = exchange.mutate()
-                .request(r -> r.header("X-User-Email", email))
+                .request(r -> r.headers(h -> {
+                    h.add("X-User-Email", email);
+                    h.add("X-User-Role", role);
+                }))
                 .build();
 
         return chain.filter(modifiedExchange);
