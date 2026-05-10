@@ -3,6 +3,7 @@ package com.crypto.portfolio_service.service.impl;
 import com.crypto.portfolio_service.dto.AddAssetRequest;
 import com.crypto.portfolio_service.dto.AssetResponse;
 import com.crypto.portfolio_service.dto.PortfolioResponse;
+import com.crypto.portfolio_service.dto.PriceResponse;
 import com.crypto.portfolio_service.entity.Portfolio;
 import com.crypto.portfolio_service.entity.PortfolioAsset;
 import com.crypto.portfolio_service.exception.AssetNotFoundException;
@@ -14,6 +15,7 @@ import com.crypto.portfolio_service.service.PortfolioService;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +27,8 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     // Handles portfolio related DB operations
     private final PortfolioRepository portfolioRepository;
+
+    private final WebClient.Builder webClientBuilder;
 
     // Handles asset related DB operations
     private final PortfolioAssetRepository assetRepository;
@@ -91,23 +95,52 @@ public class PortfolioServiceImpl implements PortfolioService {
     @Transactional(readOnly = true)
     public PortfolioResponse getPortfolio(String userEmail) {
 
-        // Fetching portfolio using email
+        // Fetching portfolio using user email
         Portfolio portfolio = portfolioRepository.findByUserEmail(userEmail)
-                .orElseThrow(() -> new PortfolioNotFoundException("Portfolio not found"));
+                .orElseThrow(() ->
+                        new PortfolioNotFoundException("Portfolio not found"));
 
-        // Mapping entity data into response DTO
+        // Fetching all assets belonging to this portfolio
         List<AssetResponse> assets = assetRepository.findByPortfolio(portfolio)
                 .stream()
-                .map(asset -> AssetResponse.builder()
-                        .symbol(asset.getSymbol())
-                        .quantity(asset.getQuantity())
-                        .build())
+                .map(asset -> {
+
+                    // Calling price-service to get live crypto price
+                    PriceResponse priceResponse = webClientBuilder.build()
+                            .get()
+                            .uri("lb://price-service/api/prices/" + asset.getSymbol())
+                            .retrieve()
+                            .bodyToMono(PriceResponse.class)
+                            .block();
+
+                    // Current market price of crypto
+                    Double currentPrice = priceResponse.getPrice();
+
+                    // Calculating total asset value
+                    // Example -> 2 BTC * 65000
+                    Double totalValue =
+                            asset.getQuantity() * currentPrice;
+
+                    // Preparing asset response object
+                    return AssetResponse.builder()
+                            .symbol(asset.getSymbol())
+                            .quantity(asset.getQuantity())
+                            .currentPrice(currentPrice)
+                            .totalValue(totalValue)
+                            .build();
+
+                })
                 .toList();
+
+        Double totalPortfolioValue = assets.stream()
+                .mapToDouble(AssetResponse::getTotalValue)
+                .sum();
 
         // Returning complete portfolio response
         return PortfolioResponse.builder()
                 .userEmail(userEmail)
                 .assets(assets)
+                .totalPortfolioValue(totalPortfolioValue)
                 .build();
     }
 

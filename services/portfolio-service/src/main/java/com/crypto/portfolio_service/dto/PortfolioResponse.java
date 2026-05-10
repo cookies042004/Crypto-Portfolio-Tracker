@@ -12,4 +12,6 @@ public class PortfolioResponse {
     private String userEmail;
 
     private List<AssetResponse> assets;
+
+    private Double totalPortfolioValue;
 }

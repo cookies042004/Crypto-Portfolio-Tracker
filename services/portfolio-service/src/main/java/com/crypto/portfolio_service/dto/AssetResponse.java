@@ -10,4 +10,8 @@ public class AssetResponse {
     private String symbol;
 
     private Double quantity;
+
+    private Double currentPrice;
+
+    private Double totalValue;
 }
