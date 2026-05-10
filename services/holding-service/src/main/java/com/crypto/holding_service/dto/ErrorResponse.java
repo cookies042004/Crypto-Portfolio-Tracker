@@ -1,4 +1,4 @@
-package com.crypto.portfolio_service.dto;
+package com.crypto.holding_service.dto;
 
 import lombok.Builder;
 import lombok.Getter;

@@ -1,21 +1,24 @@
-package com.crypto.portfolio_service.entity;
+package com.crypto.holding_service.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "portfolios")
+@Table(name = "holdings")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Portfolio {
+public class Holding {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
     private String userEmail;
+
+    private String symbol;
+
+    private Double quantity;
 }

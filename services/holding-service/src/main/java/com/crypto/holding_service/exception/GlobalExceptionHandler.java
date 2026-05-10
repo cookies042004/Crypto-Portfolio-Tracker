@@ -1,7 +1,6 @@
-package com.crypto.portfolio_service.exception;
+package com.crypto.holding_service.exception;
 
-import com.crypto.portfolio_service.dto.ErrorResponse;
-import jakarta.validation.ConstraintViolationException;
+import com.crypto.holding_service.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

@@ -1,4 +1,4 @@
-package com.crypto.portfolio_service.exception;
+package com.crypto.holding_service.exception;
 
 public class DuplicatePortfolioException extends RuntimeException {
 
