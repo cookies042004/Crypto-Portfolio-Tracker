@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: auth-service   # service name
+
+  config:
+    import: configserver:http://localhost:8888
+    # Connects this service to the Config Server
+    # At startup, it fetches configuration from Config Server (port 8888)
+
+  profiles:
+    active: dev
+    # Activates the "dev" profile
+    # Config Server will look for:
+    # 1. auth-service.yml
+    # 2. auth-service-dev.yml (profile-specific config)

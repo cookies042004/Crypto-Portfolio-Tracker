@@ -14,6 +14,10 @@
         <module>config-server</module>
         <module>eureka-server</module>
         <module>api-gateway</module>
+        <module>services/auth-service</module>
+        <module>services/holding-service</module>
+        <module>services/price-service</module>
+        <module>services/portfolio-service</module>
     </modules>
 
     <!-- Spring Boot Parent -->
