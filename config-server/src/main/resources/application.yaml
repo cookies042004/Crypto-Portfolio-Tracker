@@ -5,16 +5,12 @@ spring:
   application:
     name: config-server
 
-  profiles:
-    active: native
-
   cloud:
     config:
       server:
         git:
           uri: git@github.com:cookies042004/Crypto-Config.git
           # Git repository URL where all configuration files are stored
-
 
           default-label: main
           # Branch name of the Git repository to read configurations from
