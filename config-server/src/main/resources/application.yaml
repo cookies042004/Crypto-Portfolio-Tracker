@@ -15,6 +15,5 @@ spring:
           uri: git@github.com:cookies042004/Crypto-Config.git
           # Git repository URL where all configuration files are stored
 
-
           default-label: main
           # Branch name of the Git repository to read configurations from
