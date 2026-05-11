@@ -17,9 +17,9 @@
         <module>services/auth-service</module>
         <module>services/holding-service</module>
         <module>services/portfolio-service</module>
-        <module>services/price-service</module>
         <module>services/alert-service</module>
         <module>services/notification-service</module>
+        <module>services/price-service</module>
     </modules>
 
     <!-- Spring Boot Parent -->
