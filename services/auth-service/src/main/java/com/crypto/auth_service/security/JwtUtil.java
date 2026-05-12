@@ -83,6 +83,18 @@ public class JwtUtil {
     }
 
     /**
+     * Extracts user role from JWT claims.
+     *
+     * @param token JWT string
+     * @return role stored in custom 'role' claim
+     */
+    public String extractRole(String token) {
+
+        return getClaims(token)
+                .get("role", String.class);
+    }
+
+    /**
      * Validates a JWT by verifying:
      * 1. Signature integrity (token not tampered)
      * 2. Expiration (token not expired)
