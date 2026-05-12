@@ -1,15 +1,21 @@
 package com.crypto.auth_service.security;
 
-import jakarta.ws.rs.HttpMethod;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -17,63 +23,83 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    /**
-     * Custom authentication filter responsible for extracting and validating
-     * authentication data (e.g., JWT) from request headers.
-     */
-    private final HeaderAuthenticationFilter filter;
+    // JWT authentication filter
+    private final JwtAuthenticationFilter filter;
 
-    /**
-     * Defines the Spring Security filter chain.
-     *
-     * Responsibilities:
-     * - Disables CSRF for stateless APIs
-     * - Configures endpoint-level authorization rules
-     * - Registers custom authentication filter
-     * - Adjusts headers for H2 console access (dev only)
-     */
+    // Custom service to load user from database
+    private final CustomUserDetailsService customUserDetailsService;
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http
+    ) throws Exception {
 
         http
-                /**
-                 * CSRF is disabled because this is a stateless REST API.
-                 * Tokens (JWT) are used instead of session-based authentication.
-                 */
+
+                // Disable CSRF for REST APIs
                 .csrf(csrf -> csrf.disable())
 
-                /**
-                 * Defines authorization rules for incoming HTTP requests.
-                 */
-                .authorizeHttpRequests(auth -> auth
-                                .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
-                                // Public endpoints:
-                                // - Auth APIs (login/register)
-                                // - H2 console (for development/testing)
+                // Register authentication provider
+                .authenticationProvider(authenticationProvider())
 
-                                .anyRequest().authenticated()
-                        // All other endpoints require authentication
+                // Authorization rules
+                .authorizeHttpRequests(auth -> auth
+
+                        // Public endpoints
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/h2-console/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+
+                        // All other APIs require authentication
+                        .anyRequest().authenticated()
                 )
 
-                /**
-                 * Adds custom authentication filter before Spring's default
-                 * UsernamePasswordAuthenticationFilter.
-                 *
-                 * Ensures JWT is validated before request reaches secured endpoints.
-                 */
+                // Add JWT filter before username/password filter
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
 
-                /**
-                 * Disables frame options to allow H2 console to render in browser.
-                 * Required only for development (should not be enabled in production).
-                 */
+                // Allow H2 console frames
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
     }
 
+    /**
+     * Password encoder bean.
+     * BCrypt is recommended for password hashing.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
+
         return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * Authentication manager bean used during login.
+     */
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+
+        return configuration.getAuthenticationManager();
+    }
+
+    /**
+     * Authentication provider responsible for:
+     * - loading user from DB
+     * - verifying password
+     */
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+
+        DaoAuthenticationProvider authProvider =
+                new DaoAuthenticationProvider();
+
+        authProvider.setUserDetailsService(customUserDetailsService);
+
+        authProvider.setPasswordEncoder(passwordEncoder());
+
+        return authProvider;
     }
 }
