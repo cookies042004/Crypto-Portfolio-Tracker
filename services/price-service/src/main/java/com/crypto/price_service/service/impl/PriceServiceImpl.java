@@ -1,64 +1,105 @@
 package com.crypto.price_service.service.impl;
 
-import com.crypto.price_service.dto.PriceResponse;
+import com.crypto.price_service.client.CoinGeckoClient;
+import com.crypto.price_service.dto.response.PriceResponse;
+import com.crypto.price_service.entity.CoinPrice;
+import com.crypto.price_service.entity.CoinSymbol;
+import com.crypto.price_service.mapper.PriceMapper;
+import com.crypto.price_service.repository.PriceRepository;
 import com.crypto.price_service.service.PriceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class PriceServiceImpl implements PriceService {
 
-    // WebClient used for calling external APIs
-    private final WebClient webClient;
+    private final CoinGeckoClient coinGeckoClient;
+    private final PriceRepository priceRepository;
 
     @Override
-    public Mono<PriceResponse> getPrice(String symbol) {
+    @Cacheable(value = "coinPrices", key = "#coinSymbol")
+    public PriceResponse getCurrentPrice(String coinSymbol) {
 
-        // Converting crypto symbol into CoinGecko coin id
-        String coinId = mapSymbolToCoinId(symbol);
+        CoinPrice coinPrice = priceRepository
+                .findTopByCoinOrderByFetchedAtDesc(
+                        CoinSymbol.valueOf(coinSymbol.toUpperCase())
+                )
+                .orElseThrow(() -> new RuntimeException("Coin not found"));
 
-        // Calling CoinGecko API to fetch live crypto price
-        return webClient.get()
-                .uri("https://api.coingecko.com/api/v3/simple/price?ids="
-                        + coinId
-                        + "&vs_currencies=usd")
-                .retrieve()
-                .bodyToMono(Map.class)
-                .map(response -> {
-
-                    Map coinData = (Map) response.get(coinId);
-
-                    Double price =
-                            ((Number) coinData.get("usd")).doubleValue();
-
-                    return PriceResponse.builder()
-                            .symbol(symbol.toUpperCase())
-                            .price(price)
-                            .build();
-                });
+        return PriceMapper.toResponse(coinPrice);
     }
 
-    // Mapping user crypto symbol to CoinGecko supported id
-    private String mapSymbolToCoinId(String symbol) {
+    @Override
+    public List<PriceResponse> getAllPrices() {
 
-        return switch (symbol.toUpperCase()) {
+        return priceRepository.findAll()
+                .stream()
+                .map(PriceMapper::toResponse)
+                .toList();
+    }
 
-            // BTC -> bitcoin
-            case "BTC" -> "bitcoin";
+    @Override
+    public List<PriceResponse> getPriceHistory(String coinSymbol) {
 
-            // ETH -> ethereum
-            case "ETH" -> "ethereum";
+        return priceRepository
+                .findByCoinOrderByFetchedAtDesc(
+                        CoinSymbol.valueOf(coinSymbol.toUpperCase())
+                )
+                .stream()
+                .map(PriceMapper::toResponse)
+                .toList();
+    }
 
-            // SOL -> solana
-            case "SOL" -> "solana";
+    @Override
+    public void fetchAndUpdateAll() {
 
-            // If coin is unsupported
-            default -> throw new RuntimeException("Unsupported coin");
-        };
+        fetchAndSaveCoin("bitcoin", CoinSymbol.BTC);
+        fetchAndSaveCoin("ethereum", CoinSymbol.ETH);
+        fetchAndSaveCoin("solana", CoinSymbol.SOL);
+    }
+
+    private void fetchAndSaveCoin(String apiKey, CoinSymbol symbol) {
+
+        Map<String, Map<String, Double>> response =
+                coinGeckoClient.getPrice(
+                        apiKey,
+                        "usd",
+                        true
+                );
+
+        Double price = response
+                .get(apiKey)
+                .get("usd");
+
+        Double change24h = response
+                .get(apiKey)
+                .get("usd_24h_change");
+
+        CoinPrice coinPrice = CoinPrice.builder()
+                .coin(symbol)
+                .priceUsd(BigDecimal.valueOf(price))
+                .changePercent24h(BigDecimal.valueOf(change24h))
+                .fetchedAt(LocalDateTime.now())
+                .build();
+
+        save(coinPrice);
+    }
+
+    @Override
+    @CacheEvict(value = "coinPrices", allEntries = true)
+    public void clearCache() {
+        System.out.println("Price cache cleared");
+    }
+
+    public void save(CoinPrice entity) {
+        priceRepository.save(entity);
     }
 }

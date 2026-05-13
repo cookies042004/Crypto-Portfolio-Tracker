@@ -6,11 +6,12 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<!-- Parent -->
-	<parent>
-		<groupId>com.crypto</groupId>
-		<artifactId>crypto-portfolio</artifactId>
-		<version>1.0.0</version>
-	</parent>
+    <parent>
+        <groupId>com.crypto</groupId>
+        <artifactId>crypto-portfolio</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
 
 	<artifactId>price-service</artifactId>
 	<name>price-service</name>
@@ -22,10 +23,10 @@
 	<dependencies>
 
 		<!-- WebFlux -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
-		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
 
 		<!-- Eureka -->
 		<dependency>
@@ -57,6 +58,29 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
 
 	</dependencies>
 
