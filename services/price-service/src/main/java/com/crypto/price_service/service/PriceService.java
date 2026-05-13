@@ -1,9 +1,18 @@
 package com.crypto.price_service.service;
 
-import com.crypto.price_service.dto.PriceResponse;
-import reactor.core.publisher.Mono;
+import com.crypto.price_service.dto.response.PriceResponse;
+
+import java.util.List;
 
 public interface PriceService {
 
-    Mono<PriceResponse> getPrice(String symbol);
+    PriceResponse getCurrentPrice(String coinSymbol);
+
+    List<PriceResponse> getAllPrices();
+
+    List<PriceResponse> getPriceHistory(String coinSymbol);
+
+    void fetchAndUpdateAll();
+
+    void clearCache();
 }
